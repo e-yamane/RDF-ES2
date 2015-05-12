@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" 
+    "http://www.springframework.org/dtd/spring-beans-2.0.dtd">
+
+<beans default-lazy-init="true">
+  <bean id="serviceBus" class="jp.rough_diamond.framework.es.ServiceBus2">
+    <description>ServiceBus(MuleServer Wrapper)</description>
+    <property name="config">
+      <value>mule/mule-common-config.xml mule/mule-server-config.xml mule/mule-client-config.xml</value>
+    </property>
+  </bean>
+</beans>

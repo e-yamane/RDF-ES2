@@ -1,0 +1,21 @@
+apply plugin : 'java'
+apply plugin : 'eclipse'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+        mavenCentral()
+}
+// 2.1.2 -> 最新へ
+dependencies {
+	compile 'org.apache.cxf:cxf-rt-frontend-simple:2.1.2'
+	compile 'org.apache.cxf:cxf-rt-transports-http:2.1.2'
+	compile 'org.apache.cxf:cxf-rt-transports-http-jetty:2.1.2'
+	compile 'log4j:log4j:1.2.14'
+   	compile  fileTree(dir: 'libs/compile', include: '*.jar')
+
+    testCompile 'junit:junit:4.+'
+    testCompile 'org.mockito:mockito-core:1.9.5'
+	testCompile 'org.hamcrest:hamcrest-all:1.3'
+}
