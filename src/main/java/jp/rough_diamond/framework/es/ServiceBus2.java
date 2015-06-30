@@ -109,7 +109,7 @@ public class ServiceBus2 extends ServiceBus {
 			return;
 		}
 		NodeList list = (NodeList)xpath.evaluate("//cxf:outbound-endpoint", doc, XPathConstants.NODESET);
-		System.out.println(list.getLength());
+//		System.out.println(list.getLength());
 		for(int i = 0 ; i < list.getLength() ; i++) {
 			Element el = (Element)list.item(i);
 			ClientConfig config = new ClientConfig();
