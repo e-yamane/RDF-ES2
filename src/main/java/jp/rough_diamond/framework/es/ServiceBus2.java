@@ -21,8 +21,12 @@ import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.frontend.ServerFactoryBean;
 import org.apache.cxf.transport.http_jetty.JettyHTTPDestination;
 import org.apache.cxf.transport.http_jetty.JettyHTTPServerEngine;
+import org.mule.api.MuleMessage;
+import org.mule.api.routing.CouldNotRouteOutboundMessageException;
+import org.mule.routing.outbound.ChainingRouter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class ServiceBus2 extends ServiceBus {
@@ -51,17 +55,28 @@ public class ServiceBus2 extends ServiceBus {
 		});
 	}
 	
-	String getEndpoint(String serviceName) {
-		Map<String, Object> params = ServiceBus.getInstance().popParameters();
-		if(params.containsKey(DynamicEndPointRouter.ENDPOINT_KEY)) {
-			return (String)params.get(DynamicEndPointRouter.ENDPOINT_KEY);
-		} else {
+	String getEndpoint(String serviceName, final MuleMessage msg) {
+//		Map<String, Object> params = ServiceBus.getInstance().popParameters();
+//		if(params.containsKey(DynamicEndPointRouter.ENDPOINT_KEY)) {
+//			return (String)params.get(DynamicEndPointRouter.ENDPOINT_KEY);
+//		} else {
 			return clients.stream().filter(config -> config.serviceName.equals(serviceName)
-									).map(config -> config.defaultEndpoint).findFirst().get();
-
-		}
+									).map(config -> getEndpoint(config, msg)).findFirst().get();
+//		}
 	}
 	
+	private String getEndpoint(ClientConfig config, MuleMessage msg) {
+		try {
+			if(config.router != null) {
+				return config.router.getEndpoint(0, msg).getEndpointURI().getAddress();
+			} else {
+				return config.defaultEndpoint;
+			}
+		} catch (CouldNotRouteOutboundMessageException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	void publish() {
 		servers.forEach(config -> {
 			try {
@@ -117,7 +132,21 @@ public class ServiceBus2 extends ServiceBus {
 			config.mtomEnabled = Boolean.valueOf(replace(el.getAttribute("mtomEnabled")));
 			Element serviceTag = (Element)el.getParentNode().getParentNode().getParentNode();
 			config.serviceName = replace(serviceTag.getAttribute("name"));
+			Node parent = el.getParentNode();
+			if("custom-outbound-router".equals(parent.getNodeName())) {
+				config.router = makeRouter(parent.getAttributes().getNamedItem("class").getNodeValue(), config.defaultEndpoint);
+			}
 			clients.add(config);
+		}
+	}
+
+	private ChainingRouter makeRouter(String clsName, String address) {
+		try {
+			ChainingRouter router = (ChainingRouter) Class.forName(clsName).newInstance();
+			router.addEndpoint(new DummyOutboundEndpoint(address));
+			return router;
+		} catch (Exception e) {
+			throw new RuntimeException("OutboundRouterの生成に失敗しました：" + clsName, e);
 		}
 	}
 
@@ -198,6 +227,7 @@ public class ServiceBus2 extends ServiceBus {
 		String serviceName;
 		String defaultEndpoint;
 		boolean mtomEnabled;
+		ChainingRouter router;
 	}
 	
 	//Injection Value

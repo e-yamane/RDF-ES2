@@ -8,6 +8,7 @@ import jp.rough_diamond.framework.service.Service;
 import jp.rough_diamond.framework.service.ServiceFinder;
 
 import org.apache.cxf.frontend.ClientProxyFactoryBean;
+import org.mule.api.MuleMessage;
 
 public class ServiceFinder2 implements ServiceFinder {
 
@@ -30,7 +31,8 @@ public class ServiceFinder2 implements ServiceFinder {
 				String serviceName = sc.serviceName();
 //				System.out.println(serviceName);
 				ServiceBus2 bus = ServiceBus2.getInstance();
-				String endpoint = bus.getEndpoint(serviceName);
+				MuleMessage msg = jp.rough_diamond.framework.es.ServiceFinder.makeMessage(args);
+				String endpoint = bus.getEndpoint(serviceName, msg);
 				
 //				System.out.println(proxyType.getName());
 				

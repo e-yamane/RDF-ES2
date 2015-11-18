@@ -4,6 +4,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import jp.rough_diamond.commons.di.DIContainerFactory;
@@ -15,6 +17,8 @@ import jp.rough_diamond.sample.esb.service.SampleService2;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mule.DefaultMuleMessage;
+import org.mule.api.MuleMessage;
 
 public class ServiceBus2Test {
 	private ServiceBus2 target;
@@ -44,7 +48,25 @@ public class ServiceBus2Test {
 		assertThat("endpointがきちんと差し替わってます。", target.servers.get(1).endpoint, is("http://localhost:10080/services/SampleService2"));
 		assertThat("クライアント設定数が誤っています。", target.clients.size(), is(3));
 	}
+	
+	@Test
+	public void getEndpoint() {
+		target.makeConfig();
+		Map<String, Object> params = new HashMap<>();
+		assertThat("デフォルトのendpointが返却されています。", target.getEndpoint("SampleServiceConnector_foo", makeMessage(params)), 
+				is("http://localhost:10080/services/SampleService"));
+		params.put(DynamicEndPointRouter.ENDPOINT_KEY, "HOGEHOGE");
+		assertThat("デフォルトのendpointが返却されています。", target.getEndpoint("SampleServiceConnector_foo", makeMessage(params)), 
+				is("HOGEHOGE"));
+	}
 
+	@SuppressWarnings("deprecation")
+	MuleMessage makeMessage(Map<String, Object> params) {
+		MuleMessage ret = new DefaultMuleMessage(new Object[0]);
+		ret.addProperties(params);
+		return ret;
+	}
+	
 	public static void main(String[] args) throws Exception {
 		ServiceBus2Test test = new ServiceBus2Test();
 		test.setupDI();
