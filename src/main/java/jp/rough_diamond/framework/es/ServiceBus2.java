@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.xml.xpath.XPath;
@@ -35,7 +37,7 @@ public class ServiceBus2 extends ServiceBus {
 	List<ServerConfig> servers = new ArrayList<>();
 	List<ClientConfig> clients = new ArrayList<>();
 	private boolean isInit = false;
-	
+
 	@Override
 	synchronized public void init() {
 		if(!isInit) {
@@ -54,7 +56,11 @@ public class ServiceBus2 extends ServiceBus {
 			engine.shutdown();
 		});
 	}
-	
+
+	Set<String> getServerEndPoints() {
+		return servers.stream().map(config -> config.endpoint).collect(Collectors.toSet());
+	}
+
 	String getEndpoint(String serviceName, final MuleMessage msg) {
 //		Map<String, Object> params = ServiceBus.getInstance().popParameters();
 //		if(params.containsKey(DynamicEndPointRouter.ENDPOINT_KEY)) {
@@ -64,7 +70,7 @@ public class ServiceBus2 extends ServiceBus {
 									).map(config -> getEndpoint(config, msg)).findFirst().get();
 //		}
 	}
-	
+
 	private String getEndpoint(ClientConfig config, MuleMessage msg) {
 		try {
 			if(config.router != null) {
@@ -110,7 +116,7 @@ public class ServiceBus2 extends ServiceBus {
 //			System.out.println(doc.getDocumentElement().getPrefix());
 //			System.out.println(doc.getDocumentElement().getTagName());
 //			System.out.println(doc.getDocumentElement().getNodeName());
-			
+
 			makePlaceHolder(xpath, doc);
 			serverConfig(xpath, doc);
 			clientConfig(xpath, doc);
@@ -177,7 +183,7 @@ public class ServiceBus2 extends ServiceBus {
 			return false;
 		}
 	}
-	
+
 	private String replace(String value) {
 		for(String key :placeHolder.keySet()) {
 			value = value.replaceAll("\\$\\{" + key + "\\}", placeHolder.get(key));
@@ -222,14 +228,14 @@ public class ServiceBus2 extends ServiceBus {
 		Class<?> serviceInterface;
 		Class<?> serviceImpl;
 	}
-	
+
 	static class ClientConfig {
 		String serviceName;
 		String defaultEndpoint;
 		boolean mtomEnabled;
 		ChainingRouter router;
 	}
-	
+
 	//Injection Value
 	String config;
 	public void setConfig(String config) {
